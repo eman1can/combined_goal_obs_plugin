@@ -1,4 +1,4 @@
-# combined_goal_obs_plugin
+# Combined Goal OBS Plugin
 A OBS Overlay that interfaces with Twitch to combine multiple goal widgets into one
 
 Created by Ethan Wolfe
