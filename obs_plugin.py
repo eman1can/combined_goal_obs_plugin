@@ -19,10 +19,14 @@ from selenium.webdriver.chrome.options import Options
 
 # Variables
 # CONSTANTS
-WORKING_PATH = 'C:/Users/Zoe/Desktop/Custom Goal Bar'
+WORKING_PATH = 'C:/Users/Zoe/Desktop/combined_goal_obs_plugin'
 CHROME_DRIVER = WORKING_PATH + '/chromedriver.exe'
 # Other Variables
 bits_to_money = 0.0  # How much a single bit is worth
+t1sub_to_money = 0.0  # How much a single bit is worth
+t2sub_to_money = 0.0  # How much a single bit is worth
+t3sub_to_money = 0.0  # How much a single bit is worth
+psub_to_money = 0.0  # How much a single bit is worth
 reload_interval = 0  # in ms; How often to refresh bar
 font_name = ''  # What font to use
 bar_thickness = 48  # in px, how tall the bar is
@@ -77,6 +81,10 @@ if alert_url != '':
 # Update the bar.html file
 def check_for_updates():
     global bits_to_money
+    global t1sub_to_money
+    global t2sub_to_money
+    global t3sub_to_money
+    global psub_to_money
     global goal_current
     global driver
 
@@ -96,14 +104,46 @@ def check_for_updates():
             # Change PJNOK Money based on Alert Items
             if 'cheered!' in alert_string:  # Ex. Eman1can cheered x1000
                 # We have bits update
+                print('Add', round(float(alert_string[alert_string.index('x') + 1:]) * bits_to_money, 2), 'to goal')
                 goal_current += round(float(alert_string[alert_string.index('x') + 1:]) * bits_to_money, 2)
             elif 'donated' in alert_string: # Ex. Eman1can donated $1000
                 # We have donation update
+                print('Add', float(alert_string[alert_string.index('$') + 1:-1]), 'to goal')
                 goal_current += float(alert_string[alert_string.index('$') + 1:-1])
+            elif 'gifted' in alert_string: # Ex. Eman1can gifted a sub to firefox | Eman1can gifted 3 subs to community
+                if 'monthly prime subscription' in alert_string:
+                    goal_current += psub_to_money
+                    print('Add', psub_to_money, 'to goal')
+                else:
+                    amount = alert_string[alert_string.index('gifted') + 7:]
+                    amount = amount[:amount.index(' ')]
+                    if amount == 'a':
+                        amount = 1
+                    else:
+                        amount = int(amount)
+                    if 'tier 3' in alert_string:
+                        print('Add', amount * t3sub_to_money, 'to goal')
+                        goal_current += amount * t3sub_to_money
+                    elif 'tier 2' in alert_string:
+                        print('Add', amount * t2sub_to_money, 'to goal')
+                        goal_current += amount * t2sub_to_money
+                    else:
+                        print('Add', amount * t1sub_to_money, 'to goal')
+                        goal_current += amount * t1sub_to_money
+            elif 'resubbed' in alert_string or 'subscribed' in alert_string: # Ex. Eman1can resubbed at tier 3; Eman1can subscribed at tier 2
+                if 'tier 3' in alert_string:
+                    print('Add', t3sub_to_money, 'to goal')
+                    goal_current += t3sub_to_money
+                elif 'tier 2' in alert_string:
+                    print('Add', t2sub_to_money, 'to goal')
+                    goal_current += t2sub_to_money
+                else:
+                    print('Add', t1sub_to_money, 'to goal')
+                    goal_current += t1sub_to_money
+
             update_bar()
 
 def update_bar():
-    global bits_to_money
     global reload_interval
     global alert_url
     
@@ -140,7 +180,7 @@ def update_bar():
     <body>
     <div style="padding: 10px 20px;">
         <div class="standard__title" style="color: rgb{str(get_rgb(text_color))}; font: 800 22px / 1px &quot;{font_name}&quot;;">{goal_title}</div>
-        <div class="standard__container" style="height: {bar_thickness}px; background: rgb{str(get_rgb(bar_background_color))};"><div class="standard__current__amount" style="color: rgb(0, 0, 0); font: 800 28px / {bar_thickness}px &quot;{font_name}&quot;;">{goal_current} PM ({current_percent}%)</div>
+        <div class="standard__container" style="height: {bar_thickness}px; background: rgb{str(get_rgb(bar_background_color))};"><div class="standard__current__amount" style="color: rgb(0, 0, 0); font: 800 28px / {bar_thickness}px &quot;{font_name}&quot;;">{round(goal_current, 2)} PM ({current_percent}%)</div>
             <div style="height: 100%; width: 100%; position: absolute; top: 0px; left: 0px; z-index: 10; box-shadow: rgb(0, 0, 0) 0px 0px 2px inset;"></div>
             <div class="donation-bar standard__bar" style="background: linear-gradient(transparent, rgba(0, 0, 0, 0.15)) rgb{str(get_rgb(bar_color))}; width: {int(current_percent)}%;"></div>
         </div>
@@ -162,9 +202,19 @@ def reset_pressed(props, prop):
     goal_current = 0
     update_bar()
 
+def add_bit_to_goal(props, prop):
+    global goal_current
+    global bits_to_money
+    goal_current += bits_to_money
+    update_bar()
+
 # Called to update the local variables on property changes
 def script_update(settings):
     global bits_to_money
+    global t1sub_to_money
+    global t2sub_to_money
+    global t3sub_to_money
+    global psub_to_money
     global reload_interval
     global alert_url
     
@@ -182,6 +232,10 @@ def script_update(settings):
     global bar_background_color
 
     bits_to_money = obs.obs_data_get_double(settings, "bits_to_money")
+    t1sub_to_money = obs.obs_data_get_double(settings, "t1sub_to_money")
+    t2sub_to_money = obs.obs_data_get_double(settings, "t2sub_to_money")
+    t3sub_to_money = obs.obs_data_get_double(settings, "t3sub_to_money")
+    psub_to_money = obs.obs_data_get_double(settings, "psub_to_money")
     reload_interval = obs.obs_data_get_double(settings, "reload_interval")
     alert_url = obs.obs_data_get_string(settings, "alert_url")
     
@@ -207,6 +261,10 @@ def script_update(settings):
 # Called to set the defualt values of the options
 def script_defaults(settings):
     obs.obs_data_set_default_double(settings, "bits_to_money", 0.01)
+    obs.obs_data_set_default_double(settings, "t1sub_to_money", 3.99)
+    obs.obs_data_set_default_double(settings, "t2sub_to_money", 5.99)
+    obs.obs_data_set_default_double(settings, "t3sub_to_money", 9.99)
+    obs.obs_data_set_default_double(settings, "psub_to_money", 2.99)
     obs.obs_data_set_default_double(settings, "reload_interval", 2.5)
     
     obs.obs_data_set_default_string(settings, "goal_title", 'My Sample Goal')
@@ -226,6 +284,10 @@ def script_properties():
     props = obs.obs_properties_create()
     # General Settings
     obs.obs_properties_add_float(props, "bits_to_money", "Bits to Currency", 0.01, 100.0, 0.01)
+    obs.obs_properties_add_float(props, "t1sub_to_money", "T1 Subscription to Currency", 0.01, 100.0, 0.01)
+    obs.obs_properties_add_float(props, "t2sub_to_money", "T2 Subscription to Currency", 0.01, 100.0, 0.01)
+    obs.obs_properties_add_float(props, "t3sub_to_money", "T3 Subscription to Currency", 0.01, 100.0, 0.01)
+    obs.obs_properties_add_float(props, "psub_to_money", "Prime Subscription to Currency", 0.01, 100.0, 0.01)
     obs.obs_properties_add_float(props, "reload_interval", "Reload Interval (Seconds)", 1, 1000, 1)
     obs.obs_properties_add_text(props, "alert_url", "Alert Url", obs.OBS_TEXT_DEFAULT)
 
@@ -244,6 +306,7 @@ def script_properties():
     obs.obs_properties_add_text(props, "bar_color", "Bar Color", obs.OBS_TEXT_DEFAULT)  
     obs.obs_properties_add_text(props, "bar_background_color", "Bar Background Color", obs.OBS_TEXT_DEFAULT)
     obs.obs_properties_add_button(props, "button", "Reset Goal", reset_pressed)
+    obs.obs_properties_add_button(props, "add_button", "Add current Bit exchange to goal", add_bit_to_goal)
     return props
 
 def script_unload():

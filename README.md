@@ -4,7 +4,11 @@ A OBS Overlay that interfaces with Twitch to combine multiple goal widgets into 
 Created by Ethan Wolfe
 Please do not redistribute this freely. You CAN do that, but likely people will break it. It is a fragile baby, and if you do want to distribute it to people, please make sure that have a way to contact me (Issues on this repository works) to be able to resolve any installation or user errors they may encounter.
 
-Currently has support for bits and donations
+Currently has support for bits and donations and subs
+For subs to work, there needs to be specific triggers in variation messages.
+Say for example, someone subscribes or resubscribes. If `tier 3` or `tier 2` are in the alert message, it will be counted as a T1 sub. Otherise, it will count as one or the other. When gifted shows up in a sub message, `gifted a` will count as 1 and `gifted x` will count as however many were gifted. If someone gifts their prime monthly to another user, than it will be counted as a prime gift instead. If you do not have the tier strings in the alert messages or are not comfortable with this, then all subs (T1, T2 & T3) will count to the goal as T1.
+
+There is now also a way to set the current goal amount. Set the bit exchange rate to the difference you want, and then click the button at they bottom. For example, say you want a goal count of 510.45 and currently have it at 235.6 This can be used to manually adjust the sub tiers or to start at a predefined spot. You would set the bit exchange rate to (510.45 - 235.6) 274.85, and then click the button.
 
 Requires:
   OBS-Studio
